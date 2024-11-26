@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Animator))]
-public class Flasher : MonoBehaviour
+public class Flasher : AlarmSystem
 {
     [SerializeField] private float _currentAnimationSpeed;
     [SerializeField] private float _speedChangeRate;
@@ -21,16 +21,21 @@ public class Flasher : MonoBehaviour
         _animator.speed = _currentAnimationSpeed;
     }
 
-    public void Run(bool isFaster)
+    public override void RunGain()
     {
         if (_coroutine != null)
             StopCoroutine(_coroutine);
 
-        if (isFaster)
-            gameObject.SetActive(true);
+        gameObject.SetActive(true);
+        _coroutine = StartCoroutine(ChangingSpeed(MaxSpeedAnimation));
+    }
 
-        float targetAnimationSpeed = isFaster ? MaxSpeedAnimation : MinSpeedAnimation;
-        _coroutine = StartCoroutine(ChangingSpeed(targetAnimationSpeed));
+    public override void RunDecline()
+    {
+        if (_coroutine != null)
+            StopCoroutine(_coroutine);
+
+        _coroutine = StartCoroutine(ChangingSpeed(MinSpeedAnimation));
     }
 
     private IEnumerator ChangingSpeed(float targetAnimationSpeed)

@@ -1,41 +1,54 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 public class Mover : MonoBehaviour
 {
-    [SerializeField] private Targets _parent;
+    [SerializeField] private Rogue _rogue;
+    [SerializeField] private Target[] _targetPoints;
     [SerializeField, Min(0.01f)] private float _speed;
 
-    int _idTarget = 0;
-    List<Transform> _targets = new List<Transform>();
+    private int _idTarget = 0;
+
+#if UNITY_EDITOR
+    [ContextMenu("Refresh Child Array")]
+    private void RefreshChaildArray()
+    {
+        int pointCount = transform.childCount;
+        _targetPoints = new Target[pointCount];
+
+        for (int i = 0; i < pointCount; i++)
+        {
+            if (transform.GetChild(i).TryGetComponent<Target>(out Target target))
+                _targetPoints[i] = target;
+        }
+
+        _targetPoints = _targetPoints.OrderBy(target => target.Id).ToArray();
+    }
+#endif
 
     private void Start()
     {
-        _targets.AddRange(_parent.transform.GetComponentsInChildren<Transform>());
-        _targets = _targets.OrderBy(target => target.gameObject.name).ToList();
+        if (_targetPoints == null || _targetPoints.Length == 0)
+            throw new ArgumentNullException(nameof(_targetPoints), "Косяк косячный! Нет массива целей для перемещения");
     }
 
     private void Update()
     {
-        if (_idTarget == _targets.Count - 1)
+        if (_idTarget >= _targetPoints.Length)
             return;
 
-        if (_targets == null || _targets.Count == 0)
-            throw new ArgumentNullException(nameof(_targets), "Косяк косячный! Нет массива целей для перемещения");
-
-        Vector3 currentPosition = transform.position;
-        Vector3 targetPosition = _targets[_idTarget].position;
+        Vector3 currentPosition = _rogue.transform.position;
+        Vector3 targetPosition = _targetPoints[_idTarget].transform.position;
         targetPosition.y = currentPosition.y;
 
         currentPosition = Vector3.MoveTowards(currentPosition, targetPosition, _speed * Time.deltaTime);
+        _rogue.transform.position = currentPosition;
+        _rogue.transform.LookAt(targetPosition);
 
-        transform.position = currentPosition;
-        transform.LookAt(targetPosition);
+        float distanceSqr = (targetPosition - currentPosition).sqrMagnitude;
 
-        if (Vector3.Distance(currentPosition, targetPosition) < 0.1f)
+        if (distanceSqr < 0.1f)
             ++_idTarget;
     }
 }

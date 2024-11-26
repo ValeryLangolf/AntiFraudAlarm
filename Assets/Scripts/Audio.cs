@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(AudioSource))]
-public class Audio : MonoBehaviour
+public class Audio : AlarmSystem
 {
     [SerializeField] private float _volume;
     [SerializeField] private float _speed;
@@ -21,16 +21,21 @@ public class Audio : MonoBehaviour
         _source.volume = _volume;
     }
 
-    public void Run(bool isLouder)
+    public override void RunGain()
     {
         if (_coroutine != null)
             StopCoroutine(_coroutine);
 
-        if (isLouder)
-            _source.Play();
+        _source.Play();
+        _coroutine = StartCoroutine(ChangingVolume(MaxVolume));
+    }
 
-        float targetVolume = isLouder ? MaxVolume : MinVolume;
-        _coroutine = StartCoroutine(ChangingVolume(targetVolume));
+    public override void RunDecline()
+    {
+        if (_coroutine != null)
+            StopCoroutine(_coroutine);
+
+        _coroutine = StartCoroutine(ChangingVolume(MinVolume));
     }
 
     private IEnumerator ChangingVolume(float targetVolume)
