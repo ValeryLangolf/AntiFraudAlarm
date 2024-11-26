@@ -5,7 +5,7 @@ using UnityEngine;
 public class Mover : MonoBehaviour
 {
     [SerializeField] private Rogue _rogue;
-    [SerializeField] private Target[] _targetPoints;
+    [SerializeField] private Transform[] _targetPoints;
     [SerializeField, Min(0.01f)] private float _speed;
 
     private int _idTarget = 0;
@@ -15,15 +15,12 @@ public class Mover : MonoBehaviour
     private void RefreshChaildArray()
     {
         int pointCount = transform.childCount;
-        _targetPoints = new Target[pointCount];
+        _targetPoints = new Transform[pointCount];
 
         for (int i = 0; i < pointCount; i++)
         {
-            if (transform.GetChild(i).TryGetComponent<Target>(out Target target))
-                _targetPoints[i] = target;
+            _targetPoints[i] = transform.GetChild(i);
         }
-
-        _targetPoints = _targetPoints.OrderBy(target => target.Id).ToArray();
     }
 #endif
 
@@ -39,7 +36,7 @@ public class Mover : MonoBehaviour
             return;
 
         Vector3 currentPosition = _rogue.transform.position;
-        Vector3 targetPosition = _targetPoints[_idTarget].transform.position;
+        Vector3 targetPosition = _targetPoints[_idTarget].position;
         targetPosition.y = currentPosition.y;
 
         currentPosition = Vector3.MoveTowards(currentPosition, targetPosition, _speed * Time.deltaTime);
